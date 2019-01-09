@@ -1,0 +1,376 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda Benchmarking Pipeline
+
+Parameters:
+  # *** This value must always be passed in when creating / updating stack
+  # "NoEcho" is set to true, for security, so token won't be visible when examining the resulting stack
+  GitHubOAuthToken:
+    Type: String
+    NoEcho: true
+    MinLength: 40
+    MaxLength: 40
+    AllowedPattern: '[a-z0-9]*'
+
+  # These are hard-coded for the Symphonia "lambda-benchmarking" account - change these or 
+  # override to use in a different account
+  # These are hard-coded because CloudFormation doesn't allow pseudo params in Parameters defaults,
+  # or Mappings values. Alas. We could inline the variable, but then that would mean repeating a
+  # usage of !Sub several times
+  UsEast1ArtifactBucket:
+    Type: String
+    Default: lambda-benchmarking-build-artifacts-606484937378-us-east-1
+    AllowedPattern: "[A-Za-z0-9-]+"
+  UsEast2ArtifactBucket:
+    Type: String
+    Default: lambda-benchmarking-build-artifacts-606484937378-us-east-2
+    AllowedPattern: "[A-Za-z0-9-]+"
+  UsWest1ArtifactBucket:
+    Type: String
+    Default: lambda-benchmarking-build-artifacts-606484937378-us-west-1
+    AllowedPattern: "[A-Za-z0-9-]+"
+  UsWest2ArtifactBucket:
+    Type: String
+    Default: lambda-benchmarking-build-artifacts-606484937378-us-west-2
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+  # Remaining parameters are here mostly as 'constants' and don't need to be set externally
+  NodeEightStackName:
+    Type: String
+    Default: lambda-benchmarking-node8-generators
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+  JavaEightStackName:
+    Type: String
+    Default: lambda-benchmarking-java8-generators
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+  TimingsCollectorStackName:
+    Type: String
+    Default: lambda-benchmarking-timings-collector
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+  OutputAnalysisStackName:
+    Type: String
+    Default: lambda-benchmarking-output-analysis
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+Resources:
+  Node8CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    DependsOn: CodeBuildRole
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/nodejs:8.11.0
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+        - Name: US_EAST_1_ARTIFACT_BUCKET
+          Value: !Ref UsEast1ArtifactBucket
+        - Name: US_EAST_2_ARTIFACT_BUCKET
+          Value: !Ref UsEast2ArtifactBucket
+        - Name: US_WEST_1_ARTIFACT_BUCKET
+          Value: !Ref UsWest1ArtifactBucket
+        - Name: US_WEST_2_ARTIFACT_BUCKET
+          Value: !Ref UsWest2ArtifactBucket
+      ServiceRole: !Ref CodeBuildRole
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: infrastructure/node8-buildspec.yaml
+
+  Java8CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    DependsOn: CodeBuildRole
+    Properties:
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/java:openjdk-8
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+        - Name: US_EAST_1_ARTIFACT_BUCKET
+          Value: !Ref UsEast1ArtifactBucket
+        - Name: US_EAST_2_ARTIFACT_BUCKET
+          Value: !Ref UsEast2ArtifactBucket
+        - Name: US_WEST_1_ARTIFACT_BUCKET
+          Value: !Ref UsWest1ArtifactBucket
+        - Name: US_WEST_2_ARTIFACT_BUCKET
+          Value: !Ref UsWest2ArtifactBucket
+      ServiceRole: !Ref CodeBuildRole
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: infrastructure/java8-buildspec.yaml
+
+  GithubWebhook:
+    Type: 'AWS::CodePipeline::Webhook'
+    Properties:
+      RegisterWithThirdParty: 'true'
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: !Ref GitHubOAuthToken
+      Filters:
+      - JsonPath: "$.ref"
+        MatchEquals: refs/heads/{Branch}
+      TargetPipeline: !Ref CodePipeline
+      TargetAction: Source
+      TargetPipelineVersion: !GetAtt CodePipeline.Version
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStores:
+        - Region: us-east-1
+          ArtifactStore:
+            Type: S3
+            Location: !Ref UsEast1ArtifactBucket
+        - Region: us-east-2
+          ArtifactStore:
+            Type: S3
+            Location: !Ref UsEast2ArtifactBucket
+        - Region: us-west-1
+          ArtifactStore:
+            Type: S3
+            Location: !Ref UsWest1ArtifactBucket
+        - Region: us-west-2
+          ArtifactStore:
+            Type: S3
+            Location: !Ref UsWest2ArtifactBucket
+      RestartExecutionOnUpdate: true
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      Stages:
+      - Name: Source
+        Actions:
+        - Name: Source
+          InputArtifacts: []
+          ActionTypeId:
+            Category: Source
+            Owner: ThirdParty
+            Version: 1
+            Provider: GitHub
+          OutputArtifacts:
+          - Name: SourceCode
+          Configuration:
+            Owner: symphoniacloud
+            Repo: lambda-benchmarking
+            Branch: master
+            PollForSourceChanges: false
+            OAuthToken: !Ref GitHubOAuthToken
+          RunOrder: 1
+      - Name: Build
+        Actions:
+        - Name: Node8Build
+          ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Version: 1
+              Provider: CodeBuild
+          OutputArtifacts:
+            - Name: Node8BuildOutput
+          InputArtifacts:
+            - Name: SourceCode
+          Configuration:
+              ProjectName: !Ref Node8CodeBuildProject
+          RunOrder: 1
+        - Name: Java8Build
+          ActionTypeId:
+              Category: Build
+              Owner: AWS
+              Version: 1
+              Provider: CodeBuild
+          OutputArtifacts:
+            - Name: Java8BuildOutput
+          InputArtifacts:
+            - Name: SourceCode
+          Configuration:
+              ProjectName: !Ref Java8CodeBuildProject
+          RunOrder: 1
+      - Name: Deploy
+        Actions:
+        # Timings Collector Stack        
+        - Name: DeployTimingsCollector
+          Region: us-west-2
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: '1'
+          InputArtifacts:
+            - Name: Node8BuildOutput
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+            RoleArn: !GetAtt CloudformationRole.Arn
+            StackName: !Ref TimingsCollectorStackName
+            TemplatePath: !Sub "Node8BuildOutput::timings-collector-packaged-template-us-west-2.yaml"
+          RunOrder: 1
+        # Node8 Generator Stacks        
+        - Name: Node8GeneratorsUsEast1Deploy
+          Region: us-east-1
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: '1'
+          InputArtifacts:
+            - Name: Node8BuildOutput
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+            RoleArn: !GetAtt CloudformationRole.Arn
+            StackName: !Ref NodeEightStackName
+            TemplatePath: !Sub "Node8BuildOutput::node8-generator-packaged-template-us-east-1.yaml"
+          RunOrder: 1
+        - Name: Node8GeneratorsUsEast2Deploy
+          Region: us-east-2
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: '1'
+          InputArtifacts:
+            - Name: Node8BuildOutput
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+            RoleArn: !GetAtt CloudformationRole.Arn
+            StackName: !Ref NodeEightStackName
+            TemplatePath: !Sub "Node8BuildOutput::node8-generator-packaged-template-us-east-2.yaml"
+          RunOrder: 1
+        - Name: Node8GeneratorsUsWest1Deploy
+          Region: us-west-1
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: '1'
+          InputArtifacts:
+            - Name: Node8BuildOutput
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+            RoleArn: !GetAtt CloudformationRole.Arn
+            StackName: !Ref NodeEightStackName
+            TemplatePath: !Sub "Node8BuildOutput::node8-generator-packaged-template-us-west-1.yaml"
+          RunOrder: 1
+        - Name: Node8GeneratorsUsWest2Deploy
+          Region: us-west-2
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: '1'
+          InputArtifacts:
+            - Name: Node8BuildOutput
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+            RoleArn: !GetAtt CloudformationRole.Arn
+            StackName: !Ref NodeEightStackName
+            TemplatePath: !Sub "Node8BuildOutput::node8-generator-packaged-template-us-west-2.yaml"
+          RunOrder: 1
+        # Java8 Generator Stacks        
+        - Name: Java8GeneratorsUsEast1Deploy
+          Region: us-east-1
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: '1'
+          InputArtifacts:
+            - Name: Java8BuildOutput
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+            RoleArn: !GetAtt CloudformationRole.Arn
+            StackName: !Ref JavaEightStackName
+            TemplatePath: !Sub "Java8BuildOutput::java8-generator-packaged-template-us-east-1.yaml"
+          RunOrder: 1
+        - Name: Java8GeneratorsUsEast2Deploy
+          Region: us-east-2
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: '1'
+          InputArtifacts:
+            - Name: Java8BuildOutput
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+            RoleArn: !GetAtt CloudformationRole.Arn
+            StackName: !Ref JavaEightStackName
+            TemplatePath: !Sub "Java8BuildOutput::java8-generator-packaged-template-us-east-2.yaml"
+          RunOrder: 1
+        - Name: Java8GeneratorsUsWest1Deploy
+          Region: us-west-1
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: '1'
+          InputArtifacts:
+            - Name: Java8BuildOutput
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+            RoleArn: !GetAtt CloudformationRole.Arn
+            StackName: !Ref JavaEightStackName
+            TemplatePath: !Sub "Java8BuildOutput::java8-generator-packaged-template-us-west-1.yaml"
+          RunOrder: 1
+        - Name: Java8GeneratorsUsWest2Deploy
+          Region: us-west-2
+          ActionTypeId:
+            Category: Deploy
+            Owner: AWS
+            Provider: CloudFormation
+            Version: '1'
+          InputArtifacts:
+            - Name: Java8BuildOutput
+          Configuration:
+            ActionMode: CREATE_UPDATE
+            Capabilities: CAPABILITY_IAM,CAPABILITY_AUTO_EXPAND
+            RoleArn: !GetAtt CloudformationRole.Arn
+            StackName: !Ref JavaEightStackName
+            TemplatePath: !Sub "Java8BuildOutput::java8-generator-packaged-template-us-west-2.yaml"
+          RunOrder: 1
+          
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess #TODO: Reduce permissions
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codepipeline.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess #TODO: Reduce permissions
+
+  CloudformationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: cloudformation.amazonaws.com
+          Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess #TODO: Reduce permissions

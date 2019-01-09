@@ -1,0 +1,14 @@
+{
+  "name": "lambda-benchmarking-timings-collector",
+  "version": "1.0.0",
+  "scripts": {
+    "clean": "rm -rf target packaged-template.yaml",
+    "dist": "mkdir -p target; cp -R src package*.json target; cd target; npm install --production"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.271.1"
+  },
+  "dependencies": {
+    "csv-stringify": "^5.1.2"
+  }
+}

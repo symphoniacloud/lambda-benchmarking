@@ -1,0 +1,20 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - pip install --upgrade awscli # https://github.com/awslabs/serverless-application-model/issues/93
+  build:
+    commands:
+      - chmod u+x ./node8-codebuild.sh
+      - ./node8-codebuild.sh
+
+artifacts:
+  type: zip
+  discard-paths: yes
+  files:
+    - generators/node8/target/node8-generator-packaged-template-us-east-1.yaml
+    - generators/node8/target/node8-generator-packaged-template-us-east-2.yaml
+    - generators/node8/target/node8-generator-packaged-template-us-west-1.yaml
+    - generators/node8/target/node8-generator-packaged-template-us-west-2.yaml
+    - timingsCollector/target/timings-collector-packaged-template-us-west-2.yaml

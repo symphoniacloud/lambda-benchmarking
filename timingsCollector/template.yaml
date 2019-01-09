@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda Benchmarking
+
+Parameters:
+  NodeEightGeneratorStack:
+    Type: String
+    Default: lambda-benchmarking-node8-generators
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+  JavaEightGeneratorStack:
+    Type: String
+    Default: lambda-benchmarking-java8-generators
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+Resources:
+  # This holds all historical data, so be careful if making changes.
+  Bucket:
+    Type: AWS::S3::Bucket
+  
+  TimingsCollector:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/timingsCollector.handler
+      Runtime: nodejs8.10
+      MemorySize: 1024
+      CodeUri: ./target
+      Timeout: 60
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref Bucket
+          NODE8_GENERATOR_STACK_NAME: !Ref NodeEightGeneratorStack
+          JAVA8_GENERATOR_STACK_NAME: !Ref JavaEightGeneratorStack
+      Events:
+        TenPastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(10 * * * ? *)
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - xray:BatchGetTraces
+          - xray:GetTraceSummaries
+          Resource: '*'
+        - Effect: Allow
+          Action:
+          - s3:putObject
+          Resource: !Sub ${Bucket.Arn}/*
+        - Effect: Allow
+          Action:
+          - s3:ListBucket
+          Resource: !Sub ${Bucket.Arn}
+        - Effect: Allow
+          Action:
+          - cloudformation:ListStackResources
+          Resource:
+          - !Sub arn:aws:cloudformation:us-east-1:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-east-2:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-west-1:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-east-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-east-2:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-west-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+
+  GeneratorInvoker:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/generatorInvoker.handler
+      Runtime: nodejs8.10
+      MemorySize: 512
+      CodeUri: ./target
+      Timeout: 60
+      Environment:
+        Variables:
+          NODE8_GENERATOR_STACK_NAME: !Ref NodeEightGeneratorStack
+          JAVA8_GENERATOR_STACK_NAME: !Ref JavaEightGeneratorStack
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - lambda:InvokeFunction
+          Resource: '*'
+        - Effect: Allow
+          Action:
+          - cloudformation:ListStackResources
+          Resource:
+          - !Sub arn:aws:cloudformation:us-east-1:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-east-2:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-west-1:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-east-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-east-2:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-west-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*

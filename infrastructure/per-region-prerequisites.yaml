@@ -1,0 +1,97 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Per-region prerequisites for lambda-benchmarking
+
+Resources:
+  # Used for CodePipeline and Cloudformation/SAM artifacts across stacks
+  LambdaBenchmarkingBuildArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "lambda-benchmarking-build-artifacts-${AWS::AccountId}-${AWS::Region}"
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 90
+            Status: Enabled
+      VersioningConfiguration:
+        Status: Enabled
+
+  # VPC Resources, used by VPC enabled generators
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.31.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 172.31.0.0/20
+      MapPublicIpOnLaunch: true
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 172.31.16.0/20
+      MapPublicIpOnLaunch: true
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: 
+      VpcId: !Ref VPC
+
+  DefaultPublicRoute: 
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties: 
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+        RouteTableId: !Ref RouteTable
+        SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref PublicSubnet2
+
+Outputs:
+  LambdaBenchmarkingBuildArtifactBucket:
+    Description: The name of the build artfifact bucket for this region
+    Value: !Ref LambdaBenchmarkingBuildArtifactBucket
+    Export:
+      Name: LambdaBenchmarkingBuildArtifactBucket
+  LambdaBenchmarkingBuildArtifactBucketArn:
+    Description: The ARN of the build artfifact bucket for this region
+    Value: !GetAtt LambdaBenchmarkingBuildArtifactBucket.Arn
+    Export:
+      Name: LambdaBenchmarkingBuildArtifactBucketArn
+  SecurityGroupId:
+    Value: !Sub "${VPC.DefaultSecurityGroup}"
+    Export:
+      Name: !Sub "LambdaBenchmarking-SecurityGroupId"
+  PublicSubnetIds:
+    Value: !Sub "${PublicSubnet1},${PublicSubnet2}"
+    Export:
+      Name: !Sub "LambdaBenchmarking-PublicSubnetIds"
+  PublicSubnetAvailabilityZones:
+    Value: !Sub "${PublicSubnet1.AvailabilityZone},${PublicSubnet2.AvailabilityZone}"
+    Export:
+      Name: !Sub "LambdaBenchmarking-PublicSubnetAvailabilityZones"

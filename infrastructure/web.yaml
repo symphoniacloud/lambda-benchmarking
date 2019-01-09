@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda Benchmarking Output and Analyis
+
+Parameters:
+  # These are hard-coded for the Symphonia 's usage - change these or 
+  # override if you are deploying yourself.
+
+  # Let the pipeline run successfully once to know the bucket name
+  ContentBucket:
+    Type: String
+    Default: lambda-benchmarking-timings-collector-bucket-1mo49ch3mkwk
+    AllowedPattern: "[A-Za-z0-9-]+"
+
+  TargetDomainName:
+    Type: String
+    Default: lambda-benchmarking.symphonia.io
+
+  # Before running this template, create certificate **in us-east-1 **, with dns validation.
+  # Create the certificate with the TargetDomainName, *and* www.TargetDomainName
+  CertificateArn:
+    Type: String
+    Default: arn:aws:acm:us-east-1:606484937378:certificate/ed99ab4c-cb59-4976-8d6e-cf31625b2b75
+
+Resources:
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Lambda Benchmarking Timings
+        Origins:
+        - Id: LambdaBenchmarkingTimingsS3Origin
+          DomainName: !Sub '${ContentBucket}.s3.amazonaws.com'
+          OriginPath: '/lambda-benchmarks'
+          S3OriginConfig:
+            OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${OriginAccessIdentity}
+        Aliases:
+        - !Ref TargetDomainName
+        - !Join ['.', ['www', !Ref TargetDomainName]]
+        Enabled: 'true'
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+          - GET
+          - HEAD
+          TargetOriginId: LambdaBenchmarkingTimingsS3Origin
+          Compress: true
+          ForwardedValues:
+            QueryString: 'false'
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CertificateArn
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.1_2016
+
+  OriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Access identity between CloudFront and S3 bucket
+
+  CloudFrontS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties: 
+      Bucket: !Ref ContentBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              CanonicalUser: !GetAtt OriginAccessIdentity.S3CanonicalUserId
+            Action: "s3:GetObject"
+            Resource: !Sub 'arn:aws:s3:::${ContentBucket}/*'

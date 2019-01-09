@@ -1,0 +1,266 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda Benchmarking
+
+Globals:
+  Function:
+    Handler: io.symphonia.DataGenerator::handler
+    Timeout: 30
+    Runtime: java8
+    Tracing: Active
+
+# Consider breaking up precise activity times to avoid impact of account spikes once we have more
+# generators
+
+Resources:
+  Java8M256VFalseI1:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 256
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(5 * * * ? *)
+
+  Java8M256VFalseI2:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 256
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(6 * * * ? *)
+
+  Java8M256VFalseI3:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 256
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(7 * * * ? *)
+
+  Java8M1024VFalseI1:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 1024
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(5 * * * ? *)
+
+  Java8M1024VFalseI2:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 1024
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(6 * * * ? *)
+
+  Java8M1024VFalseI3:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 1024
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(7 * * * ? *)
+
+  Java8M3008VFalseI1:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 3008
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(5 * * * ? *)
+
+  Java8M3008VFalseI2:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 3008
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(6 * * * ? *)
+
+  Java8M3008VFalseI3:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 3008
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(7 * * * ? *)
+
+  Java8M256VTrueI1:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 256
+      VpcConfig:
+        SecurityGroupIds:
+        - !ImportValue LambdaBenchmarking-SecurityGroupId
+        SubnetIds: !Split [',', !ImportValue LambdaBenchmarking-PublicSubnetIds]
+      Policies:
+      - AWSLambdaVPCAccessExecutionRole
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(5 * * * ? *)
+
+  Java8M256VTrueI2:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 256
+      VpcConfig:
+        SecurityGroupIds:
+        - !ImportValue LambdaBenchmarking-SecurityGroupId
+        SubnetIds: !Split [',', !ImportValue LambdaBenchmarking-PublicSubnetIds]
+      Policies:
+      - AWSLambdaVPCAccessExecutionRole
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(6 * * * ? *)
+
+  Java8M256VTrueI3:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 256
+      VpcConfig:
+        SecurityGroupIds:
+        - !ImportValue LambdaBenchmarking-SecurityGroupId
+        SubnetIds: !Split [',', !ImportValue LambdaBenchmarking-PublicSubnetIds]
+      Policies:
+      - AWSLambdaVPCAccessExecutionRole
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(7 * * * ? *)
+
+  Java8M1024VTrueI1:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 1024
+      VpcConfig:
+        SecurityGroupIds:
+        - !ImportValue LambdaBenchmarking-SecurityGroupId
+        SubnetIds: !Split [',', !ImportValue LambdaBenchmarking-PublicSubnetIds]
+      Policies:
+      - AWSLambdaVPCAccessExecutionRole
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(5 * * * ? *)
+
+  Java8M1024VTrueI2:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 1024
+      VpcConfig:
+        SecurityGroupIds:
+        - !ImportValue LambdaBenchmarking-SecurityGroupId
+        SubnetIds: !Split [',', !ImportValue LambdaBenchmarking-PublicSubnetIds]
+      Policies:
+      - AWSLambdaVPCAccessExecutionRole
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(6 * * * ? *)
+
+  Java8M1024VTrueI3:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 1024
+      VpcConfig:
+        SecurityGroupIds:
+        - !ImportValue LambdaBenchmarking-SecurityGroupId
+        SubnetIds: !Split [',', !ImportValue LambdaBenchmarking-PublicSubnetIds]
+      Policies:
+      - AWSLambdaVPCAccessExecutionRole
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(7 * * * ? *)
+
+  Java8M3008VTrueI1:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 3008
+      VpcConfig:
+        SecurityGroupIds:
+        - !ImportValue LambdaBenchmarking-SecurityGroupId
+        SubnetIds: !Split [',', !ImportValue LambdaBenchmarking-PublicSubnetIds]
+      Policies:
+      - AWSLambdaVPCAccessExecutionRole
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(5 * * * ? *)
+
+  Java8M3008VTrueI2:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 3008
+      VpcConfig:
+        SecurityGroupIds:
+        - !ImportValue LambdaBenchmarking-SecurityGroupId
+        SubnetIds: !Split [',', !ImportValue LambdaBenchmarking-PublicSubnetIds]
+      Policies:
+      - AWSLambdaVPCAccessExecutionRole
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(6 * * * ? *)
+
+  Java8M3008VTrueI3:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/lambda.jar
+      MemorySize: 3008
+      VpcConfig:
+        SecurityGroupIds:
+        - !ImportValue LambdaBenchmarking-SecurityGroupId
+        SubnetIds: !Split [',', !ImportValue LambdaBenchmarking-PublicSubnetIds]
+      Policies:
+      - AWSLambdaVPCAccessExecutionRole
+      Events:
+        FivePastHour:
+          Type: Schedule
+          Properties:
+            Schedule: cron(7 * * * ? *)
