@@ -341,7 +341,7 @@ async function findHoursWithContent(bucket, day) {
 function generateRootIndex() {
   return generateHTML("Lambda Benchmarking", 
   `
-    <h1>Welcome to Lambda Benchmarking, from <a href="https://www.symphonia.io/">Symphonia</a></h1>
+    <h1>Welcome to <a href="https://github.com/symphoniacloud/lambda-benchmarking">Lambda Benchmarking</a>, from <a href="https://www.symphonia.io/">Symphonia</a></h1>
     <ul>
       <li><a href="/runtime-invocation-latency/index.html">Invocation Latency (Cold Start Analysis, etc.)</a></li>
     </ul>
@@ -351,7 +351,7 @@ function generateRootIndex() {
 function generateLatencyIndex(days) {
   return generateHTML("Lambda Benchmarking", 
   `
-    <h1>Welcome to Lambda Benchmarking, from <a href="https://www.symphonia.io/">Symphonia</a></h1>
+    <h1>Welcome to <a href="https://github.com/symphoniacloud/lambda-benchmarking">Lambda Benchmarking</a>, from <a href="https://www.symphonia.io/">Symphonia</a></h1>
     <h2>Invocation Latency (for Cold Start analysis)</h2>
     <p><a href="latest.html"><b>Latest Timings</b></a>, also available in <a href="latest.json">JSON</a> and <a href="latest.csv">CSV</a>
     <p>Historical data available for the following dates:</p>
@@ -364,7 +364,7 @@ function generateLatencyIndex(days) {
 function generateDayIndex(day, hours) {
   return generateHTML("Lambda Benchmarking", 
   `
-  <h3>Lambda Benchmarking, from <a href="https://www.symphonia.io/">Symphonia</a></h3>
+  <h3><a href="https://github.com/symphoniacloud/lambda-benchmarking">Lambda Benchmarking</a>, from <a href="https://www.symphonia.io/">Symphonia</a></h3>
   <h2>Invocation Latency for ${day} by hour</h2>
   <p>See <a href="/runtime-invocation-latency/index.html">here</a> for historical data.</p>
   <table class="table table-striped table-condensed">
