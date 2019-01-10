@@ -46,16 +46,15 @@ Data generation:
 * Add more runtimes (submissions gratefully accepted!)
 * Add package size as axis
 * Add more regions
-* Also do warm start
 * Change manual invoker to call synchronously and show returned value (so we know if errors)
+* Also do warm starts?
 
 Data collection / presentation
 
+* Set longer cache expiry for date/time paths
+* Think about how to do better data analysis
 * Handle non existence of particular generator data and move on
 * Other error checking / handling
-* Delete indexes and data for earlier than Jan 9
-* Think about how to do better data analysis
-* Set longer cache expiry for date/time paths
 
 Infrastructure
 
