@@ -107,7 +107,7 @@ Resources:
         ErrorsTopic:
           Type: SNS
           Properties:
-            Schedule: !Ref ErrorsTopic 
+            Topic: !Ref ErrorsTopic 
 
   GeneratorInvoker:
     Type: AWS::Serverless::Function
