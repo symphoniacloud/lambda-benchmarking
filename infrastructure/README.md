@@ -18,8 +18,11 @@ Now to deploy the CodePipeline pipeline. This is responsible for deploying:
 Update `pipeline.yaml` as follows:
 * Update the artifact bucket names in the `Parameters` section, using your sub account ID
 * If you want a different set of regions then update everywhere in the template that is region specific
+* If you don't care about using Slack for notifications, then delete the `SlackUrl` parameter and the line `ParameterOverrides: !Sub '{"SlackUrl": "${SlackUrl}"}'` from `DeployTimingsCollector`
 
-Commit your changes, and deploy the pipeline using `create-pipeline.sh` passing a GitHub personal access token (with admin access to your version of the repository) as an argument.
+If you removed the Slack items, then also update the `create-pipeline.sh` and `update-pipeline.sh` scripts, removing the second argument for a Slack URL; **and** update `timingsCollector/template.yaml` to remove the `SlackUrl` parameter and `SlackErrorNotifier` function.
+
+Commit your changes, and deploy the pipeline using `create-pipeline.sh` passing a GitHub personal access token (with admin access to your version of the repository) as an argument. If you still have Slack notification also pass a Incoming Webhook URL.
 
 Once all that is working you can deploy the web resources. If you don't care about
 custom domain names then edit the `web.yaml` file to remove all the parts about aliases and certificates, and ignore the section below about DNS and certificates.

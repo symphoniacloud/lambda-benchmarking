@@ -60,4 +60,5 @@ Data collection / presentation
 Infrastructure
 
 * Consider using for CDK for generators and/or pipeline template
+* Consider monitoring generators for invocation errors (similar to how we already do for timingsCollector)
 
