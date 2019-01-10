@@ -32,6 +32,12 @@ There are a whole bunch of ways of slicing and dicing this data, here are a coup
 
 I'm hoping to drill more into the data as time goes by and I have more to analyze.
 
+## Feedback
+
+If you have any questions, comments, additions or suggestions please feel free to comment through GitHub, on twitter at [@mikebroberts](https://twitter.com/mikebroberts), or via email at mike@symphonia.io.
+
+If your company is looking for help using the various services used in this project, or architecture using AWS, then please also drop me an email, or contact us at [Symphonia](https://www.symphonia.io/).
+
 ## Implementation
 
 Implementation currently consists of the following:
