@@ -30,6 +30,8 @@ There are a whole bunch of ways of slicing and dicing this data, here are a coup
 ![Example 1](/images/example1.png "title")
 ![Example 2](/images/example2.png "title")
 
+I'm hoping to drill more into the data as time goes by and I have more to analyze.
+
 ## Implementation
 
 Implementation currently consists of the following:
