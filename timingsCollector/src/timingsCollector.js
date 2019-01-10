@@ -286,15 +286,11 @@ function createHTML(instanceMergedTimings, timestampedLinkPrefix) {
   `)
 }
 
-// Uncomment to test locally
-// updateHTML('symphonia-mike-dev');
-
 async function updateIndexes(bucket) {
   await writeContentToS3(bucket, "index.html", generateRootIndex(), "text/html")
   const days = await findDaysWithContent(bucket);
   console.log(`Found the following days in bucket ${bucket} : ${days}`)
   await writeContentToS3(bucket, "runtime-invocation-latency/index.html", generateLatencyIndex(days), "text/html")
-  // TODO - will only need to do this for days[0] once earlier days data created
   await writeContentToS3(
     bucket,
     `runtime-invocation-latency/date=${days[0]}/index.html`,
@@ -303,39 +299,42 @@ async function updateIndexes(bucket) {
   console.log("Complete")
 }
 
-// findDaysWithContent('symphonia-mike-dev')
-
-// TODO - paging !!
 async function findDaysWithContent(bucket) {
-  const objectsResponse = await s3.listObjectsV2({
-    Bucket: bucket,
-    Prefix: 'lambda-benchmarks/runtime-invocation-latency/date='
-  }).promise();
-
-  const keys = objectsResponse.Contents.map(o => o.Key);
-
-  // Switch to Set and back again to filter to unique entries
-  const days = ([...new Set(
-    keys.map(dir => dir.substring(50, 60))
-  )]).sort().reverse();
-
-  return days;
+  const keys = await listKeysInBucket(bucket, 'lambda-benchmarks/runtime-invocation-latency/date=');
+  const days = keys.map(dir => dir.substring(50, 60))
+  return removeDuplicates(days).sort().reverse();
 }
 
 async function findHoursWithContent(bucket, day) {
+  const keys = await listKeysInBucket(bucket, `lambda-benchmarks/runtime-invocation-latency/date=${day}/hour=`);
+  const hours = keys.map(dir => dir.substring(66, 68))
+  return removeDuplicates(hours).sort().reverse();
+}
+
+async function listKeysInBucket(bucket, prefix) {
+  const objectList = await pagedListObjectsInBucket(bucket, prefix, null, []);
+  return objectList.map(o => o.Key);
+}
+
+async function pagedListObjectsInBucket(bucket, prefix, continuationToken, accumulator) {
   const objectsResponse = await s3.listObjectsV2({
     Bucket: bucket,
-    Prefix: `lambda-benchmarks/runtime-invocation-latency/date=${day}/hour=`
+    Prefix: prefix,
+    ContinuationToken: continuationToken
   }).promise();
 
-  const keys = objectsResponse.Contents.map(o => o.Key);
+  const newAccumulator = accumulator.concat(objectsResponse.Contents);
 
-  // Switch to Set and back again to filter to unique entries
-  const hours = ([...new Set(
-    keys.map(dir => dir.substring(66, 68))
-  )]).sort().reverse();
+  if (objectsResponse.IsTruncated) {
+    return pagedListObjectsInBucket(bucket, prefix, objectsResponse.NextContinuationToken, newAccumulator);
+  }
+  else {
+    return newAccumulator;
+  }
+}
 
-  return hours;
+function removeDuplicates(array) {
+  return ([...new Set(array)]);
 }
 
 function generateRootIndex() {

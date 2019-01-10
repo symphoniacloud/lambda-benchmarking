@@ -53,7 +53,6 @@ Data collection / presentation
 
 * Handle non existence of particular generator data and move on
 * Other error checking / handling
-* Do S3 API paging for indexes
 * Delete indexes and data for earlier than Jan 9
 * Think about how to do better data analysis
 * Set longer cache expiry for date/time paths
