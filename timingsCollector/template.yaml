@@ -13,6 +13,10 @@ Parameters:
     Default: lambda-benchmarking-java8-generators
     AllowedPattern: "[A-Za-z0-9-]+"
 
+  SlackUrl:
+    Type: String
+    NoEcho: true
+
 Resources:
   # This holds all historical data, so be careful if making changes.
   Bucket:
@@ -86,6 +90,24 @@ Resources:
 
   ErrorsTopic:
     Type: AWS::SNS::Topic
+
+  SlackErrorNotifier:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/slackErrorNotifier.handler
+      Runtime: nodejs8.10
+      MemorySize: 256
+      CodeUri: ./target
+      Timeout: 20
+      Environment:
+        Variables:
+          SLACK_URL: !Ref SlackUrl
+          SLACK_CHANNEL: lambda-benchmarking
+      Events:
+        ErrorsTopic:
+          Type: SNS
+          Properties:
+            Schedule: !Ref ErrorsTopic 
 
   GeneratorInvoker:
     Type: AWS::Serverless::Function

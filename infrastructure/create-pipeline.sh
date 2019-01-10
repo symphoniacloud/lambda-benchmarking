@@ -5,5 +5,5 @@ set -eu
 aws cloudformation create-stack \
         --capabilities CAPABILITY_IAM \
         --stack-name lambda-benchmarking-pipeline \
-        --parameters ParameterKey=GitHubOAuthToken,ParameterValue=${1} \
+        --parameters ParameterKey=GitHubOAuthToken,ParameterValue=${1} ParameterKey=SlackUrl,ParameterValue=${2} \
         --template-body file://pipeline.yaml

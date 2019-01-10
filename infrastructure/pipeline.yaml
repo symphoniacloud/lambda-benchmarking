@@ -11,6 +11,15 @@ Parameters:
     MaxLength: 40
     AllowedPattern: '[a-z0-9]*'
 
+  # *** This value must always be passed in when creating / updating stack
+  # This is for Slack monitoring - pass an incoming webhook URL.
+  # If you don't want Slack monitoring delete this, it's counterpart
+  # in /timingsCollector/template.yaml, and the SlackErrorNotifier resource
+  # from that template
+  SlackUrl:
+    Type: String
+    NoEcho: true
+
   # These are hard-coded for the Symphonia "lambda-benchmarking" account - change these or 
   # override to use in a different account
   # These are hard-coded because CloudFormation doesn't allow pseudo params in Parameters defaults,
@@ -204,6 +213,7 @@ Resources:
             RoleArn: !GetAtt CloudformationRole.Arn
             StackName: !Ref TimingsCollectorStackName
             TemplatePath: !Sub "Node8BuildOutput::timings-collector-packaged-template-us-west-2.yaml"
+            ParameterOverrides: !Sub '{"SlackUrl": "${SlackUrl}"}'
           RunOrder: 1
         # Node8 Generator Stacks        
         - Name: Node8GeneratorsUsEast1Deploy
