@@ -1,8 +1,12 @@
 # Lambda Benchmarking
 
-Benchmarks for the AWS Lambda service.
+**Benchmarks for the AWS Lambda service.**
 
 Currently what we're capturing is Lambda platform latencies for functions that haven't been invoked for an hour or so. In other words - **cold start latency**.
+
+It's interesting to see how cold start latencies compare across a number of axes. For example, we know that cold starts are typically longer when we enable VPC support, but what about other factors like runtime, memory, region, function package size - how do they impact cold starts? And how does cold start latency vary over time?
+
+This project captures cold start data every hour for a number of configurations. We record that data, capturing a number of attributes and metrics. We can see cold start latencies by looking at the **system duration** for when a Lambda function is invoked - this is the time from when the lambda platform receives an event to when our own code starts.
 
 Historical results are available in HTML, JSON and CSV forms, at https://lambda-benchmarking.symphonia.io/, alternatively latest results are available:
 
@@ -17,7 +21,7 @@ We benchmark across a number of axes, at present these are:
 * Runtime (Node JS 8, Java)
 * Memory Size (256MB, 1024MB, 3008MB)
 
-We have 3 individual lambda functions for each combination, and each is run once per hour. We take the median duration values of the 3 and record these.
+We have 3 individual lambda functions for each combination, and each is run once per hour. We take the median duration values of the 3 and record these, and in the JSON / CSV forms you'll also see the min and max values.
 
 ## Example analyses
 
