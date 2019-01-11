@@ -175,7 +175,7 @@ async function writeToS3(bucket, keySuffix, content, contentType, cacheSeconds) 
 }
 
 async function publishTimingsJSON(timings, bucket) {
-  await publishTimingsFiles(bucket, JSON.stringify(timings, null, 2), "html");
+  await publishTimingsFiles(bucket, JSON.stringify(timings, null, 2), "json");
 }
 
 async function publishTimingsCSV(timings, bucket) {
