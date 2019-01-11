@@ -87,6 +87,8 @@ Resources:
       ActionsEnabled: True
       AlarmActions:
         - !Ref ErrorsTopic
+      OKActions:
+        - !Ref ErrorsTopic
 
   ErrorsTopic:
     Type: AWS::SNS::Topic
