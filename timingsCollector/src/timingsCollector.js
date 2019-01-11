@@ -196,8 +196,8 @@ async function publishTimingsFiles(bucket, content, fileType) {
   const contentType = fileTypeToContentType[fileType];
 
   await Promise.all([
-    writeToS3(content, bucket, `${latestPathPrefix()}.${fileType}`, contentType, 10),
-    writeToS3(content, bucket, `${thisHourPath()}/timings.${fileType}`, contentType, 3600)
+    writeToS3(bucket, `${latestPathPrefix()}.${fileType}`, content, contentType, 10),
+    writeToS3(bucket, `${thisHourPath()}/timings.${fileType}`, content, contentType, 3600)
   ])
 }
 
