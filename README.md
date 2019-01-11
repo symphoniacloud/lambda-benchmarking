@@ -63,7 +63,6 @@ Data generation:
 
 Data collection / presentation
 
-* Set longer cache expiry for date/time paths
 * Think about how to do better data analysis
 * Handle non existence of particular generator data and move on
 * Other error checking / handling

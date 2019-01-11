@@ -10,9 +10,11 @@ const s3 = new AWS.S3({ region: defaultRegion });
 // Eequivalent to { "us-east-1": new AWS.XRay({region: "us-east-1"}), etc... }
 const xray = Object.assign({}, ...common.allRegions.map(region => ({[region]: new AWS.XRay({region: region})})));
 
+const standardHeading = '<h1><a href="https://github.com/symphoniacloud/lambda-benchmarking">Lambda Benchmarking</a>, from <a href="https://www.symphonia.io/">Symphonia</a></h1>';
+
 // Uncomment this for local testing
 // collectTimings(
-//   "symphonia-mike-dev", 
+//   "bucket", 
 //   ["lambda-benchmarking-node8-generators"],
 //   ["us-west-2"]
 //   )
@@ -30,10 +32,11 @@ async function collectTimings(bucketName, stackNames, regions) {
   const generatorInstanceSpecs = await generators.createGeneratorInstanceSpecs(stackNames, regions, generatorSpecs);
   const timings = await Promise.all(generatorInstanceSpecs.map(queryXRayForTimings))
   const instanceMergedTimings = generatorSpecs.map(generator => mergeInstanceTimings(generator, timings));
-  await publishHTML(instanceMergedTimings, bucketName);
-  await publishJSON(instanceMergedTimings, bucketName);
-  await publishCSV(instanceMergedTimings, bucketName);
-  await updateIndexes(bucketName);
+  await publishTimingsHTML(instanceMergedTimings, bucketName);
+  await publishTimingsJSON(instanceMergedTimings, bucketName);
+  await publishTimingsCSV(instanceMergedTimings, bucketName);
+  await publishIndexes(bucketName);
+  console.log("Complete")
 }
 
 async function queryXRayForTimings(generator) {
@@ -144,52 +147,64 @@ function mergeInstanceTimings(generator, allTimings) {
 
 function todaysDateYYYYMMDD() {
   const now = new Date();
-  return`${now.getFullYear()}-${("0"+(now.getMonth()+1)).slice(-2)}-${("0" + now.getDate()).slice(-2)}`
+  return `${now.getFullYear()}-${("0"+(now.getMonth()+1)).slice(-2)}-${("0" + now.getDate()).slice(-2)}`
 }
 
-// TODO - timestamped files cache should be longer, e.g. 3600
-async function publishJSON(timings, bucket) {
-  const outputBody = JSON.stringify(timings, null, 2);
-  const keyPrefix = "lambda-benchmarks/runtime-invocation-latency"
-  const latestKey = `${keyPrefix}/latest.json`
-  const timestampedKey = `${keyPrefix}/date=${todaysDateYYYYMMDD()}/hour=${("0"+(new Date().getHours())).slice(-2)}/timings.json`
-  await Promise.all([timestampedKey, latestKey].map(key => {
-    console.log("Writing timings to " + key);
-    return s3.putObject({
-      Body: outputBody,
-      Bucket: bucket,
-      Key: key,
-      ContentType: "application/json",
-      CacheControl: 'public, max-age=10'
-    }).promise();
-    })
-  );
+function currentHourHH() {
+  return ("0"+(new Date().getHours())).slice(-2);
 }
 
-// TODO - timestamped files cache should be longer, e.g. 3600
-async function publishCSV(timings, bucket) {
-  const outputBody = createCSVString(timings);
-  const keyPrefix = "lambda-benchmarks/runtime-invocation-latency"
-  const latestKey = `${keyPrefix}/latest.csv`
-  const timestampedKey = `${keyPrefix}/date=${todaysDateYYYYMMDD()}/hour=${("0"+(new Date().getHours())).slice(-2)}/timings.csv`
-  await Promise.all([timestampedKey, latestKey].map(key => {
-    console.log("Writing timings to " + key);
-    return s3.putObject({
-      Body: outputBody,
-      Bucket: bucket,
-      Key: key,
-      ContentType: "text/csv",
-      CacheControl: 'public, max-age=10'
-    }).promise();
-    })
-  );
+function thisHourPath(){
+  return `runtime-invocation-latency/date=${todaysDateYYYYMMDD()}/hour=${currentHourHH()}`
+}
+
+function latestPathPrefix() {
+  return "runtime-invocation-latency/latest";
+}
+
+async function writeToS3(bucket, keySuffix, content, contentType, cacheSeconds) {
+  const key = `lambda-benchmarks/${keySuffix}`;
+  console.log(`Writing ${key} to S3`);
+  return s3.putObject({
+    Body: content,
+    Bucket: bucket,
+    Key: key,
+    ContentType: contentType,
+    CacheControl: `public, max-age=${cacheSeconds}`
+  }).promise();
+}
+
+async function publishTimingsJSON(timings, bucket) {
+  await publishTimingsFiles(bucket, JSON.stringify(timings, null, 2), "html");
+}
+
+async function publishTimingsCSV(timings, bucket) {
+  await publishTimingsFiles(bucket, createCSVString(timings), "csv");
+}
+
+async function publishTimingsHTML(timings, bucket) {
+  await publishTimingsFiles(bucket, createTimingsHTML(timings), "html");
+}
+
+const fileTypeToContentType = {
+  "html" : "text/html",
+  "csv" : "text/csv",
+  "json" : "application/json"
+}
+
+async function publishTimingsFiles(bucket, content, fileType) {
+  const contentType = fileTypeToContentType[fileType];
+
+  await Promise.all([
+    writeToS3(content, bucket, `${latestPathPrefix()}.${fileType}`, contentType, 10),
+    writeToS3(content, bucket, `${thisHourPath()}/timings.${fileType}`, contentType, 3600)
+  ])
 }
 
 function createCSVString(instanceMergedTimings) {
   const headerRow = ["region", "runtime", "memory", "packageSize", "vpc", "generatorID",
                       "systemDuration", "userDuration", "totalDuration", "traceId", "startTime", "startFullDateTime",
-                      "minOtherSystemDurations", "maxOtherSystemDurations", "timingsCaptured"
-                    ]
+                      "minOtherSystemDurations", "maxOtherSystemDurations", "timingsCaptured"]
 
   const dataRows = instanceMergedTimings.map(instance => [
     instance.region,
@@ -213,90 +228,16 @@ function createCSVString(instanceMergedTimings) {
   return stringify(allrows);
 }
 
-async function writeContentToS3(bucket, keySuffix, content, contentType) {
-  return s3.putObject({
-    Body: content,
-    Bucket: bucket,
-    Key: `lambda-benchmarks/${keySuffix}`,
-    ContentType: contentType,
-    CacheControl: 'public, max-age=10'
-  }).promise();
-}
-
-// TODO - timestamped files cache should be longer, e.g. 3600
-async function publishHTML(timings, bucket) {
-  const keyPrefix = "lambda-benchmarks/runtime-invocation-latency"
-  const latestKey = `${keyPrefix}/latest.html`
-  const timestampedKey = `${keyPrefix}/date=${todaysDateYYYYMMDD()}/hour=${("0"+(new Date().getHours())).slice(-2)}/timings.html`
-  const timestampedLinkPrefix = `/runtime-invocation-latency/date=${todaysDateYYYYMMDD()}/hour=${("0"+(new Date().getHours())).slice(-2)}`
-  const outputBody = createHTML(timings, timestampedLinkPrefix);
-  await Promise.all([timestampedKey, latestKey].map(key => {
-    console.log("Writing timings to " + key);
-    return s3.putObject({
-      Body: outputBody,
-      Bucket: bucket,
-      Key: key,
-      ContentType: "text/html",
-      CacheControl: 'public, max-age=10'
-    }).promise();
-    })
-  );
-}
-
-function createHTML(instanceMergedTimings, timestampedLinkPrefix) {
-  return generateHTML("Lambda Benchmarking", 
-  `
-    <h3>Lambda Benchmarking, from <a href="https://www.symphonia.io/">Symphonia</a></h3>
-    <p>
-      Lambda benchmark data generated during the ${("0"+(new Date().getHours())).slice(-2)}:00 hour on ${todaysDateYYYYMMDD()}.
-      See <a href="/runtime-invocation-latency/index.html">here</a> for historical data.
-    </p>
-    <p>
-      Machine readable versions are avalable in <a href="${timestampedLinkPrefix}/timings.json">JSON</a> and 
-      <a href="${timestampedLinkPrefix}/timings.csv">CSV</a>.
-    </p>
-    <table class="table table-striped table-condensed">
-      <tr>
-        <th>Region</th>
-        <th>Runtime</th>
-        <th>Memory</th>
-        <th>Package Size</th>
-        <th>Uses VPC?</th>
-        <th>System Duration</th>
-        <th>User Duration</th>
-        <th>Total Duration</th>
-        <th>Start Time</th>
-        <th>Generator ID</th>
-      </tr>
-      ${instanceMergedTimings.map(instance => `
-      <tr>
-        <td>${instance.region}</td>
-        <td>${instance.runtime}</td>
-        <td>${instance.memory}</td>
-        <td>${instance.packageSize}</td>
-        <td>${instance.vpc}</td>
-        <td>${instance.systemDuration}</td>
-        <td>${instance.userDuration}</td>
-        <td>${instance.totalDuration}</td>
-        <td>${instance.startFullDateTime}</td>
-        <td>${instance.generatorID}</td>
-      </tr>`
-      ).join('')}
-    </table>
-  `)
-}
-
-async function updateIndexes(bucket) {
-  await writeContentToS3(bucket, "index.html", generateRootIndex(), "text/html")
+async function publishIndexes(bucket) {
+  await writeToS3(bucket, "index.html", generateRootIndex(), "text/html", 10)
   const days = await findDaysWithContent(bucket);
-  console.log(`Found the following days in bucket ${bucket} : ${days}`)
-  await writeContentToS3(bucket, "runtime-invocation-latency/index.html", generateLatencyIndex(days), "text/html")
-  await writeContentToS3(
+  await writeToS3(bucket, "runtime-invocation-latency/index.html", generateLatencyIndex(days), "text/html", 10)
+  await writeToS3(
     bucket,
     `runtime-invocation-latency/date=${days[0]}/index.html`,
     generateDayIndex(days[0], await findHoursWithContent(bucket, days[0])),
-    "text/html")
-  console.log("Complete")
+    "text/html",
+    10)
 }
 
 async function findDaysWithContent(bucket) {
@@ -312,8 +253,7 @@ async function findHoursWithContent(bucket, day) {
 }
 
 async function listKeysInBucket(bucket, prefix) {
-  const objectList = await pagedListObjectsInBucket(bucket, prefix, null, []);
-  return objectList.map(o => o.Key);
+  return (await pagedListObjectsInBucket(bucket, prefix, null, [])).map(o => o.Key);
 }
 
 async function pagedListObjectsInBucket(bucket, prefix, continuationToken, accumulator) {
@@ -337,10 +277,47 @@ function removeDuplicates(array) {
   return ([...new Set(array)]);
 }
 
+function createTimingsHTML(instanceMergedTimings) {
+  return generateHTML("Lambda Benchmarking", 
+  `
+    ${standardHeading}
+    <p>
+      Lambda benchmark data generated during the ${currentHourHH()}:00 hour on ${todaysDateYYYYMMDD()}.
+      See <a href="/runtime-invocation-latency/index.html">here</a> for historical data.
+    </p>
+    <p>
+      Machine readable versions are avalable in <a href="${thisHourPath()}/timings.json">JSON</a> and 
+      <a href="${thisHourPath()}/timings.csv">CSV</a>.
+    </p>
+    <table class="table table-striped table-condensed">
+      <tr>
+        ${['Region', 'Runtime', 'Memory', 'Package Size', 'Uses VPC?', 'System Duration', 
+            'User Duration', 'Total Duration', 'Start Time', 'Generator ID'].map(header => `
+          <th>${header}</th>
+        `).join('')}
+      </tr>
+      ${instanceMergedTimings.map(instance => `
+      <tr>
+        <td>${instance.region}</td>
+        <td>${instance.runtime}</td>
+        <td>${instance.memory}</td>
+        <td>${instance.packageSize}</td>
+        <td>${instance.vpc}</td>
+        <td>${instance.systemDuration}</td>
+        <td>${instance.userDuration}</td>
+        <td>${instance.totalDuration}</td>
+        <td>${instance.startFullDateTime}</td>
+        <td>${instance.generatorID}</td>
+      </tr>`
+      ).join('')}
+    </table>
+  `)
+}
+
 function generateRootIndex() {
   return generateHTML("Lambda Benchmarking", 
   `
-    <h1>Welcome to <a href="https://github.com/symphoniacloud/lambda-benchmarking">Lambda Benchmarking</a>, from <a href="https://www.symphonia.io/">Symphonia</a></h1>
+    ${standardHeading}
     <ul>
       <li><a href="/runtime-invocation-latency/index.html">Invocation Latency (Cold Start Analysis, etc.)</a></li>
     </ul>
@@ -350,12 +327,14 @@ function generateRootIndex() {
 function generateLatencyIndex(days) {
   return generateHTML("Lambda Benchmarking", 
   `
-    <h1>Welcome to <a href="https://github.com/symphoniacloud/lambda-benchmarking">Lambda Benchmarking</a>, from <a href="https://www.symphonia.io/">Symphonia</a></h1>
+    ${standardHeading}
     <h2>Invocation Latency (for Cold Start analysis)</h2>
     <p><a href="latest.html"><b>Latest Timings</b></a>, also available in <a href="latest.json">JSON</a> and <a href="latest.csv">CSV</a>
     <p>Historical data available for the following dates:</p>
     <ul>
-      ${days.map(day => `<li><a href="date%3D${day}/index.html">${day}</a></li>`).join('')}
+      ${days.map(day => `
+        <li><a href="date%3D${day}/index.html">${day}</a></li>
+      `).join('')}
     </ul>
   `)
 }
@@ -363,7 +342,7 @@ function generateLatencyIndex(days) {
 function generateDayIndex(day, hours) {
   return generateHTML("Lambda Benchmarking", 
   `
-  <h3><a href="https://github.com/symphoniacloud/lambda-benchmarking">Lambda Benchmarking</a>, from <a href="https://www.symphonia.io/">Symphonia</a></h3>
+  ${standardHeading}
   <h2>Invocation Latency for ${day} by hour</h2>
   <p>See <a href="/runtime-invocation-latency/index.html">here</a> for historical data.</p>
   <table class="table table-striped table-condensed">
@@ -402,9 +381,6 @@ function generateHTML(title, content) {
       <div class="container">
 ${content}
       </div>
-      <!-- Latest compiled and minified JavaScript -->
-      <!-- <script src="https://stackpath.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js" integrity="sha384-vhJnz1OVIdLktyixHY4Uk3OHEwdQqPppqYR8+5mjsauETgLOcEynD9oPHhhz18Nw" crossorigin="anonymous"></script> -->
-  
     </body>
   </html>  
   `
