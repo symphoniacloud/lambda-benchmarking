@@ -17,3 +17,7 @@ artifacts:
     - generators/java8/target/java8-generator-packaged-template-us-east-2.yaml
     - generators/java8/target/java8-generator-packaged-template-us-west-1.yaml
     - generators/java8/target/java8-generator-packaged-template-us-west-2.yaml
+    - generators/java8/target/java8-generator-packaged-template-eu-central-1.yaml
+    - generators/java8/target/java8-generator-packaged-template-eu-west-1.yaml
+    - generators/java8/target/java8-generator-packaged-template-eu-west-2.yaml
+    - generators/java8/target/java8-generator-packaged-template-eu-west-3.yaml
