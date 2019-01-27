@@ -16,7 +16,7 @@ Historical results are available in HTML, JSON and CSV forms, at https://lambda-
 
 We benchmark across a number of axes, at present these are:
 
-* Region (us-east-1, us-east-2, us-west-1, us-west-2)
+* Region (us-east-1, us-east-2, us-west-1, us-west-2, eu-central-1, eu-west-1, eu-west-2, eu-west-3)
 * VPC (enabled, or not)
 * Runtime (Node JS 8, Java)
 * Memory Size (256MB, 1024MB, 3008MB)

@@ -64,10 +64,18 @@ Resources:
           - !Sub arn:aws:cloudformation:us-east-2:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-west-1:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-central-1:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-1:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-2:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-3:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-east-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-east-2:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-west-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-central-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-2:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-3:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
 
   TimingsCollectorErrorAlarm:
     Type: AWS::CloudWatch::Alarm
@@ -138,7 +146,15 @@ Resources:
           - !Sub arn:aws:cloudformation:us-east-2:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-west-1:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-central-1:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-1:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-2:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-3:${AWS::AccountId}:stack/${NodeEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-east-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-east-2:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-west-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
           - !Sub arn:aws:cloudformation:us-west-2:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-central-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-1:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-2:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
+          - !Sub arn:aws:cloudformation:eu-west-3:${AWS::AccountId}:stack/${JavaEightGeneratorStack}/*
