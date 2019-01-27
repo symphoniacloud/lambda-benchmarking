@@ -29,9 +29,12 @@ exports.handler = async (event, context) => {
 
 async function collectTimings(bucketName, stackNames, regions) {
   const generatorSpecs = generators.createGeneratorSpecs(regions)
+  console.log("Querying CloudFormation to locate generator functions")
   const generatorInstanceSpecs = await generators.createGeneratorInstanceSpecs(stackNames, regions, generatorSpecs);
+  console.log("Querying XRay for timings")
   const timings = await Promise.all(generatorInstanceSpecs.map(queryXRayForTimings))
   const instanceMergedTimings = generatorSpecs.map(generator => mergeInstanceTimings(generator, timings));
+  console.log("Writing output files")
   await publishTimingsHTML(instanceMergedTimings, bucketName);
   await publishTimingsJSON(instanceMergedTimings, bucketName);
   await publishTimingsCSV(instanceMergedTimings, bucketName);
