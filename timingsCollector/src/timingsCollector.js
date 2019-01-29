@@ -32,8 +32,8 @@ async function collectTimings(bucketName, stackNames, regions) {
   console.log("Querying CloudFormation to locate generator functions")
   const generatorInstanceSpecs = await generators.createGeneratorInstanceSpecs(stackNames, regions, generatorSpecs);
   console.log("Querying XRay for timings")
-  const timings = await queryAllXRayForTimings(regions, generatorInstanceSpecs)
-  // const timings = await Promise.all(generatorInstanceSpecs.map(queryXRayForTimings))
+  // const timings = await queryAllXRayForTimings(regions, generatorInstanceSpecs)
+  const timings = await Promise.all(generatorInstanceSpecs.map(queryXRayForTimings))
   const instanceMergedTimings = generatorSpecs.map(generator => mergeInstanceTimings(generator, timings));
   console.log("Writing output files")
   await publishTimingsHTML(instanceMergedTimings, bucketName);
