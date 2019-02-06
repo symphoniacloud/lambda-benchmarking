@@ -14,8 +14,8 @@ const standardHeading = '<h1><a href="https://github.com/symphoniacloud/lambda-b
 
 // Uncomment this for local testing
 // collectTimings(
-//   "bucket", 
-//   ["lambda-benchmarking-node8-generators"],
+//   "lambda-benchmarking-timings-collector-bucket-84wl7ot2per5", 
+//   ["lambda-benchmarking-node8-generators", "lambda-benchmarking-java8-generators"],
 //   ["us-west-2"]
 //   )
 
@@ -54,9 +54,11 @@ async function queryAllXRayForTimings(regions, generators) {
 async function queryXRayForTimings(generator) {
   const traceSummaries = await getTraceSummaries(generator);
 
-  const traces = (await xray[generator.region].batchGetTraces({
+  callXRayBatchGetTraciesAndRetry
+
+  const traces = (await callXRayBatchGetTraciesAndRetry(generator.region, {
     TraceIds: traceSummaries.map(summary => summary.Id)
-  }).promise()).Traces;
+  })).Traces;
 
   const timingData = traces.map(trace => processTrace(trace, generator));
   // Just want latest values for this generator
@@ -69,12 +71,12 @@ async function getTraceSummaries(generator) {
 }
 
 async function getPaginatedTraceSummaries(endTime, generator, nextToken, summariesAccumulator) {
-  const traceSummaryResults = await xray[generator.region].getTraceSummaries({
+  const traceSummaryResults = await callXRayTraceSummariesAndRetry(generator.region,{
     StartTime: endTime - 60 * 60, // Last hour
     EndTime: endTime,
     FilterExpression: `service("${generator.generatorFunction}")`,
     NextToken: nextToken
-  }).promise();
+  })
 
   const newTraceSummaries = summariesAccumulator.concat(traceSummaryResults.TraceSummaries);
 
@@ -82,6 +84,47 @@ async function getPaginatedTraceSummaries(endTime, generator, nextToken, summari
     return await getPaginatedTraceSummaries(endTime, generator, traceSummaryResults.NextToken, newTraceSummaries);
   else
     return newTraceSummaries;
+}
+
+function sleep(approxSeconds) {
+  console.log(approxSeconds * 1000 + Math.floor(Math.random() * Math.floor(1000)))
+  return new Promise(resolve => setTimeout(resolve, approxSeconds * 1000 + Math.floor(Math.random() * Math.floor(1000))));
+}
+
+async function callXRayTraceSummariesAndRetry(region, params, attempt = 1) {
+  try {
+    return await xray[region].getTraceSummaries(params).promise()
+  }
+  catch (err) {
+    console.log(`Error calling xray[${region}].getTraceSummaries, attempt ${1}`)
+    if (attempt > 9) {
+      const message = `Reached max retry count for xray[${region}].getTraceSummaries - aborting`
+      console.error(message)
+      throw message
+    }
+    else {
+      await sleep(attempt)
+      return await callXRayTraceSummariesAndRetry(region, params, attempt + 1)
+    }
+  }
+}
+
+async function callXRayBatchGetTraciesAndRetry(region, params, attempt = 1) {
+  try {
+    return await xray[region].batchGetTraces(params).promise()
+  }
+  catch (err) {
+    console.log(`Error calling xray[${region}].batchGetTraces, attempt ${1}`)
+    if (attempt > 9) {
+      const message = `Reached max retry count for xray[${region}].batchGetTraces - aborting`
+      console.error(message)
+      throw message
+    }
+    else {
+      await sleep(attempt)
+      return await callXRayBatchGetTraciesAndRetry(region, params, attempt + 1)
+    }
+  }
 }
 
 // A "trace" in X-Ray corresponds to all the activity to do with an event
