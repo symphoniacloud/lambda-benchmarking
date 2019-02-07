@@ -34,6 +34,8 @@ async function collectTimings(bucketName, stackNames, regions) {
   console.log("Querying XRay for timings")
   // const timings = await queryAllXRayForTimings(regions, generatorInstanceSpecs)
   const timings = await Promise.all(generatorInstanceSpecs.map(queryXRayForTimings))
+  console.log("Collected timings:")
+  console.log(JSON.stringify(timings))
   const instanceMergedTimings = generatorSpecs.map(generator => mergeInstanceTimings(generator, timings));
   console.log("Writing output files")
   await publishTimingsHTML(instanceMergedTimings, bucketName);

@@ -89,7 +89,7 @@ Resources:
       Statistic: Sum
       ComparisonOperator: GreaterThanThreshold
       Threshold: 0
-      Period: 60
+      Period: 600
       EvaluationPeriods: 1
       TreatMissingData: "notBreaching"
       ActionsEnabled: True
