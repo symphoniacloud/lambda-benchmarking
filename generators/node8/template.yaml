@@ -22,7 +22,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(5 1/4 ? *)
+            Schedule: cron(5 1/4 * * ? *)
 
   NodeJS8M256VFalseI2:
     Type: AWS::Serverless::Function
@@ -33,7 +33,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(6 1/4 ? *)
+            Schedule: cron(6 1/4 * * ? *)
 
   NodeJS8M256VFalseI3:
     Type: AWS::Serverless::Function
@@ -44,7 +44,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(7 1/4 ? *)
+            Schedule: cron(7 1/4 * * ? *)
 
   NodeJS8M1024VFalseI1:
     Type: AWS::Serverless::Function
@@ -55,7 +55,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(5 1/4 ? *)
+            Schedule: cron(5 1/4 * * ? *)
 
   NodeJS8M1024VFalseI2:
     Type: AWS::Serverless::Function
@@ -66,7 +66,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(6 1/4 ? *)
+            Schedule: cron(6 1/4 * * ? *)
 
   NodeJS8M1024VFalseI3:
     Type: AWS::Serverless::Function
@@ -77,7 +77,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(7 1/4 ? *)
+            Schedule: cron(7 1/4 * * ? *)
 
   NodeJS8M3008VFalseI1:
     Type: AWS::Serverless::Function
@@ -88,7 +88,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(5 1/4 ? *)
+            Schedule: cron(5 1/4 * * ? *)
 
   NodeJS8M3008VFalseI2:
     Type: AWS::Serverless::Function
@@ -99,7 +99,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(6 1/4 ? *)
+            Schedule: cron(6 1/4 * * ? *)
 
   NodeJS8M3008VFalseI3:
     Type: AWS::Serverless::Function
@@ -110,7 +110,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(7 1/4 ? *)
+            Schedule: cron(7 1/4 * * ? *)
 
   NodeJS8M256VTrueI1:
     Type: AWS::Serverless::Function
@@ -127,7 +127,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(5 1/4 ? *)
+            Schedule: cron(5 1/4 * * ? *)
 
   NodeJS8M256VTrueI2:
     Type: AWS::Serverless::Function
@@ -144,7 +144,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(6 1/4 ? *)
+            Schedule: cron(6 1/4 * * ? *)
 
   NodeJS8M256VTrueI3:
     Type: AWS::Serverless::Function
@@ -161,7 +161,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(7 1/4 ? *)
+            Schedule: cron(7 1/4 * * ? *)
 
   NodeJS8M1024VTrueI1:
     Type: AWS::Serverless::Function
@@ -178,7 +178,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(5 1/4 ? *)
+            Schedule: cron(5 1/4 * * ? *)
 
   NodeJS8M1024VTrueI2:
     Type: AWS::Serverless::Function
@@ -195,7 +195,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(6 1/4 ? *)
+            Schedule: cron(6 1/4 * * ? *)
 
   NodeJS8M1024VTrueI3:
     Type: AWS::Serverless::Function
@@ -212,7 +212,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(7 1/4 ? *)
+            Schedule: cron(7 1/4 * * ? *)
 
   NodeJS8M3008VTrueI1:
     Type: AWS::Serverless::Function
@@ -229,7 +229,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(5 1/4 ? *)
+            Schedule: cron(5 1/4 * * ? *)
 
   NodeJS8M3008VTrueI2:
     Type: AWS::Serverless::Function
@@ -246,7 +246,7 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(6 1/4 ? *)
+            Schedule: cron(6 1/4 * * ? *)
 
   NodeJS8M3008VTrueI3:
     Type: AWS::Serverless::Function
@@ -263,4 +263,4 @@ Resources:
         FivePastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(7 1/4 ? *)
+            Schedule: cron(7 1/4 * * ? *)
