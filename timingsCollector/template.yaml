@@ -39,7 +39,7 @@ Resources:
         TenPastHour:
           Type: Schedule
           Properties:
-            Schedule: cron(10 * * * ? *)
+            Schedule: cron(10 1/4 ? *)
       Policies:
       - Version: '2012-10-17'
         Statement:
