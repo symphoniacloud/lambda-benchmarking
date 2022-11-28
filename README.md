@@ -2,6 +2,13 @@
 
 **Benchmarks for the AWS Lambda service.**
 
+## ARCHIVED
+
+Please note - this repository is not under anything like active maintainance so please don't use it for anything more than ideas!
+
+...
+
+
 Currently what we're capturing is Lambda platform latencies for functions that haven't been invoked for an hour or so. In other words - **cold start latency**.
 
 It's interesting to see how cold start latencies compare across a number of axes. For example, we know that cold starts are typically longer when we enable VPC support, but what about other factors like runtime, memory, region, function package size - how do they impact cold starts? And how does cold start latency vary over time?
